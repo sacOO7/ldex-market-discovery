@@ -1,0 +1,29 @@
+{
+  "name": "ldex-market-discovery",
+  "version": "0.1.0",
+  "description": "Ldex client module to retrieve active market data based on blockchain transactions",
+  "main": "index.ts",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc",
+    "prepublish": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sacOO7/ldex-market-discovery.git"
+  },
+  "keywords": ["lisk", "lisk-dex", "module"],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sacOO7/ldex-market-discovery/issues"
+  },
+  "homepage": "https://github.com/sacOO7/ldex-market-discovery#readme",
+  "devDependencies": {
+    "@types/jest": "^26.0.5",
+    "@types/node": "^14.0.23",
+    "jest": "^26.1.0",
+    "ts-jest": "^26.1.3",
+    "typescript": "^3.9.7"
+  }
+}
