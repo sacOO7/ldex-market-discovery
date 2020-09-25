@@ -28,10 +28,6 @@ jobs:
           command: |
             set +e
             yarn build
-      - persist_to_workspace:
-          root: .
-          paths:
-            - dist
 
 workflows:
   test-and-deploy:

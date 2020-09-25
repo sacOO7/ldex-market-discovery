@@ -1,0 +1,8 @@
+# Include this in library declaration if not found
+/// <reference types="selenium-webdriver" />
+
+npm pack
+npm config list
+npm link
+npm login
+npm publish
