@@ -3,13 +3,12 @@ const url = require('url');
 const ClientConfig = (() => {
     let hostname = "54.82.244.206";
     let ssl = false;
-    let path = "api"
+    let basePath = "api"
     let port = "8010";
+    let offset = 1;
+    let limit = 100;
 
     return {
-        builder() {
-          return ClientConfig();
-        },
         leaseHoldClient() {
             return this;
         },
@@ -23,21 +22,46 @@ const ClientConfig = (() => {
             ssl = value
             return this;
         },
-        setHost(host) {
-            hostname = host;
+        setHost(hostname) {
+            this.hostname = hostname;
             return this;
         },
-        setPort(portName) {
-            port = portName
+        setPort(port) {
+            this.port = port
             return this;
         },
-        build () {
+        setBasePath(path) {
+            basePath = path;
+        },
+        setOffset(offset) {
+            this.offset = offset ;
+        },
+        setLimit(limit) {
+            this.limit = limit;
+        },
+        getStatusUrl () {
          return url.format({
              protocol: ssl ? "https" : "http",
              hostname: hostname,
-             pathname: `/${path}`,
+             pathname: `/${basePath}/node/status`,
              port : port
          });
+        },
+        getTransactionsUrl (walletAddress) {
+            let query = {
+                offset: offset,
+                limit: limit,
+            }
+            if (walletAddress) {
+                query.senderIdOrRecipientId = walletAddress;
+            }
+            return url.format({
+                protocol: ssl ? "https" : "http",
+                hostname: hostname,
+                pathname: `/${basePath}/transactions`,
+                port : port,
+                query: query
+            });
         }
     }
 });
