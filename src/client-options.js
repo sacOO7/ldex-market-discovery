@@ -1,6 +1,6 @@
-const url = require('url');
+import url from 'url';
 
-const ClientConfig = (() => {
+export const ClientConfig = (() => {
     let hostname = "54.82.244.206";
     let ssl = false;
     let basePath = "api"
@@ -65,5 +65,3 @@ const ClientConfig = (() => {
         }
     }
 });
-
-module.exports.ClientConfig = ClientConfig;

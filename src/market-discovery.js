@@ -1,5 +1,4 @@
-const request = require('request');
-
+import request from 'request';
 /**
  * Used to query node health/status
  * *
@@ -7,12 +6,12 @@ const request = require('request');
  * returns node status for given hostname/ip address
  */
 
-function getNodeStatus(clientConfig) {
-request(clientConfig.getStatusUrl(), function (error, response, body) {
-    console.error('error:', error); // Print the error if one occurred
-    console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-    console.log('body:', body); // Print the HTML for the Google homepage.
-})
+export function getNodeStatus(clientConfig) {
+    request(clientConfig.getStatusUrl(), function (error, response, body) {
+        console.error('error:', error); // Print the error if one occurred
+        console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+        console.log('body:', body); // Print the HTML for the Google homepage.
+    })
 }
 
 /**
@@ -22,7 +21,7 @@ request(clientConfig.getStatusUrl(), function (error, response, body) {
  * returns list of dex wallets for given chain
  */
 
-function getMultiSignatureDexWallet(clientConfig) {
+export function getMultiSignatureDexWallet(clientConfig) {
     request(clientConfig.getTransactionsUrl(), function (error, response, body) {
         console.error('error:', error); // Print the error if one occurred
         console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
@@ -35,7 +34,7 @@ function getMultiSignatureDexWallet(clientConfig) {
  * @param clientConfig client config to query data from specified chain
  * @param walletAddress dex wallet address for given chain
  */
-function getMultiSignatureDexWalletTransactions(clientConfig, walletAddress = "7485409328757727573L") {
+export function getMultiSignatureDexWalletTransactions(clientConfig, walletAddress = "7485409328757727573L") {
     request(clientConfig.getTransactionsUrl(walletAddress), function (error, response, body) {
         console.error('error:', error); // Print the error if one occurred
         console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
@@ -48,7 +47,7 @@ function getMultiSignatureDexWalletTransactions(clientConfig, walletAddress = "7
  * Used to find all available markets on the chain
  * @param clientConfig
  */
-function findAvailableMarkets(clientConfig) {
+export function findAvailableMarkets(clientConfig) {
     request(clientConfig.getTransactionsUrl(), function (error, response, body) {
         console.error('error:', error); // Print the error if one occurred
         console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
@@ -56,9 +55,3 @@ function findAvailableMarkets(clientConfig) {
     })
 }
 
-module.exports = {
-    getNodeStatus,
-    getMultiSignatureDexWallet,
-    findAvailableMarkets,
-    getMultiSignatureDexWalletTransactions
-}

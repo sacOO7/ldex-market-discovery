@@ -2,12 +2,13 @@
   "name": "ldex-market-discovery",
   "version": "0.1.0",
   "description": "Ldex client module to retrieve active market data based on blockchain transactions",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
+    "start": "babel-node src/index.js",
     "lint": "eslint . --ext .js",
     "lint:fix": "eslint . --fix --ext .js",
     "test": "jest",
-    "build": "node index.js"
+    "build": "babel src -d lib"
   },
   "repository": {
     "type": "git",
@@ -25,7 +26,11 @@
   },
   "homepage": "https://github.com/sacOO7/ldex-market-discovery#readme",
   "devDependencies": {
+    "@babel/cli": "^7.11.6",
+    "@babel/core": "^7.11.6",
+    "@babel/preset-env": "^7.11.5",
     "babel-eslint": "^10.1.0",
+    "babel-jest": "^26.3.0",
     "eslint": "^7.7.0",
     "jest": "^26.1.0"
   },

@@ -1,8 +1,7 @@
-const ldexMarket = require('../index');
-
+import { getLdexMarket } from '../src/index';
 describe("Ldex Markets", () => {
     it ("Should return proper ldex market", () => {
-        const market = ldexMarket.getLdexMarket();
+        const market = getLdexMarket();
         expect(market).toBe("lsk/eth");
     })
 });
