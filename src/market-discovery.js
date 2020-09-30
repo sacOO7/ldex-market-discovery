@@ -1,4 +1,4 @@
-import request from 'request';
+import axios from 'axios'
 /**
  * Used to query node health/status
  * *
@@ -6,12 +6,13 @@ import request from 'request';
  * returns node status for given hostname/ip address
  */
 
-export function getNodeStatus(clientConfig) {
-    request(clientConfig.getStatusUrl(), function (error, response, body) {
-        console.error('error:', error); // Print the error if one occurred
-        console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-        console.log('body:', body); // Print the HTML for the Google homepage.
-    })
+export async function getNodeStatus(clientConfig) {
+    try {
+        const response = await axios.get(clientConfig.getStatusUrl());
+        console.log(response);
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 /**
@@ -21,12 +22,13 @@ export function getNodeStatus(clientConfig) {
  * returns list of dex wallets for given chain
  */
 
-export function getMultiSignatureDexWallet(clientConfig) {
-    request(clientConfig.getTransactionsUrl(), function (error, response, body) {
-        console.error('error:', error); // Print the error if one occurred
-        console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-        console.log('body:', body); // Print the HTML for the Google homepage.
-    })
+export async function getMultiSignatureDexWallet(clientConfig) {
+    try {
+        const response = await axios.get(clientConfig.getTransactionsUrl());
+        console.log(response.data);
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 /**
@@ -34,12 +36,14 @@ export function getMultiSignatureDexWallet(clientConfig) {
  * @param clientConfig client config to query data from specified chain
  * @param walletAddress dex wallet address for given chain
  */
-export function getMultiSignatureDexWalletTransactions(clientConfig, walletAddress = "7485409328757727573L") {
-    request(clientConfig.getTransactionsUrl(walletAddress), function (error, response, body) {
-        console.error('error:', error); // Print the error if one occurred
-        console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-        console.log('body:', body); // Print the HTML for the Google homepage.
-    })
+export async function getMultiSignatureDexWalletTransactions(clientConfig, walletAddress = "7485409328757727573L") {
+
+    try {
+        const response = await axios.get(clientConfig.getTransactionsUrl(walletAddress));
+        console.log(response);
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 /**
@@ -47,11 +51,12 @@ export function getMultiSignatureDexWalletTransactions(clientConfig, walletAddre
  * Used to find all available markets on the chain
  * @param clientConfig
  */
-export function findAvailableMarkets(clientConfig) {
-    request(clientConfig.getTransactionsUrl(), function (error, response, body) {
-        console.error('error:', error); // Print the error if one occurred
-        console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-        console.log('body:', body); // Print the HTML for the Google homepage.
-    })
+export async function findAvailableMarkets(clientConfig) {
+    try {
+        const response = await axios.get(clientConfig.getTransactionsUrl());
+        console.log(response);
+    } catch (error) {
+        console.error(error);
+    }
 }
 
