@@ -5,7 +5,7 @@ export const ClientConfig = (() => {
     let ssl = false;
     let basePath = "api"
     let port = "8010";
-    let offset = 1;
+    let offset = 0;
     let limit = 100;
 
     return {
@@ -22,22 +22,31 @@ export const ClientConfig = (() => {
             ssl = value
             return this;
         },
-        setHost(hostname) {
-            this.hostname = hostname;
+        setHost(hostName) {
+            hostname = hostName;
             return this;
         },
-        setPort(port) {
-            this.port = port
+        setPort(portName) {
+            port = portName
             return this;
         },
         setBasePath(path) {
             basePath = path;
+            return this;
         },
-        setOffset(offset) {
-            this.offset = offset ;
+        setOffset(offsetValue) {
+            offset = offsetValue;
+            return this;
         },
-        setLimit(limit) {
-            this.limit = limit;
+        getOffset() {
+            return offset;
+        },
+        getLimit() {
+            return limit;
+        },
+        setLimit(limitValue) {
+            limit = limitValue;
+            return this;
         },
         getStatusUrl () {
          return url.format({
