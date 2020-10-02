@@ -12,7 +12,7 @@ import {getTotalTransactions, isDexAccount} from "./utils";
 export async function getNodeStatus(clientConfig) {
     try {
         const response = await axios.get(clientConfig.getStatusUrl());
-        console.log(response);
+        return response.data;
     } catch (error) {
         console.error(error);
     }
@@ -108,7 +108,6 @@ export async function findMarket(clientConfig, dexWalletAddress) {
                     return market;
                 }
             }
-            console.log("Offset is " + offset);
             offset += limit;
         } while (offset < totalTransactionsCount);
 
@@ -121,8 +120,8 @@ export async function findMarket(clientConfig, dexWalletAddress) {
 /**
  * Used to query all multiSigTransactions in order to find trading volume, ranking dex markets & other stats for the market
  * @param clientConfig client config to query data from specified chain
- * @param walletAddress dex wallet address for given chain
+ * @param dexMarketPair dex wallet address for given chain
  */
 export async function getMarketVolume(clientConfig, dexMarketPair) {
-    throw Error("Not implemented yet");
+    throw Error(`Input is ${clientConfig} ${dexMarketPair} : functionality not implemented yet`);
 }

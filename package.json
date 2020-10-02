@@ -5,8 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "start": "babel-node main.js",
-    "lint": "eslint . --ext .js",
-    "lint:fix": "eslint . --fix --ext .js",
+    "lint": "eslint src --ext .js",
+    "lint:fix": "eslint src --fix --ext .js",
     "test": "jest",
     "build": "babel src -d lib"
   },
