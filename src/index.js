@@ -1,5 +1,6 @@
 import axios from 'axios'
-import {transactionType, minMembers} from "./dex";
+import {transactionType} from "./dex";
+import {getTotalTransactions, isDexAccount} from "./utils";
 
 /**
  * Used to query node health/status
@@ -17,42 +18,12 @@ export async function getNodeStatus(clientConfig) {
     }
 }
 
-async function isDexAccount(clientConfig, walletAddress) {
-    try {
-        const response = await axios.get(clientConfig.getMultiSignatureGroupUrl(walletAddress));
-        const multiSignatureGroups = response.data.data;
-        for (const group of multiSignatureGroups) {
-            if (group.address === walletAddress) {
-                if(group.members.length >= minMembers) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    } catch (error) {
-        return false;
-    }
-}
-function getTransactionUrl(clientConfig, walletAddress) {
-    let url = clientConfig.getTransactionsUrl();
-    if (walletAddress) {
-        url = clientConfig.getTransactionsUrl(walletAddress)
-    }
-    return url;
-}
-
-export async function getTotalTransactionsCount(clientConfig, walletAddress) {
-    let url = getTransactionUrl(clientConfig, walletAddress);
-    const response = await axios.get(url);
-    return response.data.meta.count;
-}
-
 
 export async function* getDexMarketPair(leaseholdClient) {
     let dexWallets = getMultiSignatureDexWallets(leaseholdClient);
     let dexMarketPairs = [];
     for await (let dexWallet of dexWallets) {
-        const market = await findAvailableMarket(leaseholdClient, dexWallet);
+        const market = await findMarket(leaseholdClient, dexWallet);
         yield { market, dexWallet };
         dexMarketPairs.push({ market, dexWallet });
     }
@@ -89,7 +60,7 @@ export async function* getMultiSignatureDexWallets(clientConfig) {
 
     let offset = clientConfig.getOffset();
     let limit = clientConfig.getLimit();
-    let totalTransactionsCount = await getTotalTransactionsCount(clientConfig);
+    let totalTransactionsCount = await getTotalTransactions(clientConfig);
     try {
         do {
             clientConfig.setOffset(offset);
@@ -115,35 +86,20 @@ export async function* getMultiSignatureDexWallets(clientConfig) {
 }
 
 /**
- * Used to query all multiSigTransactions in order to find trading volume, ranking dex markets & other stats for the market
- * @param clientConfig client config to query data from specified chain
- * @param walletAddress dex wallet address for given chain
- */
-export async function getMarketVolume(clientConfig, walletAddress = "7485409328757727573L") {
-
-    try {
-        const response = await axios.get(clientConfig.getTransactionsUrl(walletAddress));
-        console.log(response);
-    } catch (error) {
-        console.error(error);
-    }
-}
-
-/**
  * Crawls through all the transactions
  * Used to find all available markets on the chain
  * @param clientConfig
  * @param dexWalletAddress
  */
-export async function findAvailableMarket(clientConfig, dexWalletAddress) {
+export async function findMarket(clientConfig, dexWalletAddress) {
     let market = null;
     try {
         let offset = clientConfig.getOffset();
         let limit = clientConfig.getLimit();
-        let totalTransactionsCount = await getTotalTransactionsCount(clientConfig);
+        let totalTransactionsCount = await getTotalTransactions(clientConfig, dexWalletAddress);
         do {
             clientConfig.setOffset(offset);
-            const response = await axios.get(getTransactionUrl(clientConfig, dexWalletAddress));
+            const response = await axios.get(clientConfig.getTransactionsUrl(dexWalletAddress));
             const transactions = response.data.data;
             for (const transaction of transactions) {
                 const assetData = transaction.asset?.data;
@@ -162,4 +118,11 @@ export async function findAvailableMarket(clientConfig, dexWalletAddress) {
     return market;
 }
 
-
+/**
+ * Used to query all multiSigTransactions in order to find trading volume, ranking dex markets & other stats for the market
+ * @param clientConfig client config to query data from specified chain
+ * @param walletAddress dex wallet address for given chain
+ */
+export async function getMarketVolume(clientConfig, dexMarketPair) {
+    throw Error("Not implemented yet");
+}
