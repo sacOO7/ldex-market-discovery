@@ -4,7 +4,7 @@
   "description": "Ldex client module to retrieve active market data based on blockchain transactions",
   "main": "lib/index.js",
   "scripts": {
-    "start": "babel-node src/index.js",
+    "start": "babel-node main.js",
     "lint": "eslint . --ext .js",
     "lint:fix": "eslint . --fix --ext .js",
     "test": "jest",
