@@ -71,6 +71,14 @@ export const ClientConfig = (() => {
                 port : port,
                 query: query
             });
+        },
+        getMultiSignatureGroupUrl (walletAddress) {
+            return url.format({
+                protocol: ssl ? "https" : "http",
+                hostname: hostname,
+                pathname: `/${basePath}/accounts/${walletAddress}/multisignature_groups`,
+                port : port
+            });
         }
     }
 });

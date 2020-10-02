@@ -1,5 +1,5 @@
 import axios from 'axios'
-import {dexTransaction} from "./traansaction-filter";
+import {transactionType, minMembers} from "./dex";
 
 /**
  * Used to query node health/status
@@ -17,6 +17,32 @@ export async function getNodeStatus(clientConfig) {
     }
 }
 
+export async function isDexAccount(clientConfig, walletAddress) {
+    try {
+        const response = await axios.get(clientConfig.getMultiSignatureGroupUrl(walletAddress));
+        const multiSignatureGroups = response.data.data;
+        for (const group of multiSignatureGroups) {
+            if (group.address === walletAddress) {
+                if(group.members.length >= minMembers) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    } catch (error) {
+        return false;
+    }
+}
+
+export async function getTotalTransactionsCount(clientConfig, walletAddress) {
+    let url = clientConfig.getTransactionsUrl();
+    if (walletAddress) {
+        url = clientConfig.getTransactionsUrl(walletAddress)
+    }
+    const response = await axios.get(url);
+    return response.data.meta.count;
+}
+
 /**
  *  Used to query all transactions on the chain and find out multisignature wallets with matching dex transactions
  *  Can be reused to find markets available on given chain
@@ -28,30 +54,38 @@ export async function* getMultiSignatureDexWallets(clientConfig) {
     let uniqueDexAddresses = []
     let totalUniqueDexAddresses = []
 
+    const addUniqueDexAddress = (address) => {
+        if ( uniqueDexAddresses.indexOf(address) === -1  && totalUniqueDexAddresses.indexOf(address) === -1) uniqueDexAddresses.push(address);
+    }
     const extractAndMapDexTransactions = (transaction) => {
         const assetData = transaction.asset.data;
         const senderId = transaction.senderId;
+        const recipientId = transaction.recipientId;
         if (assetData) {
-            if (assetData.includes(dexTransaction.dividend)) {
-                if ( uniqueDexAddresses.indexOf(senderId) === -1  && totalUniqueDexAddresses.indexOf(senderId) === -1) uniqueDexAddresses.push(senderId);
+            if (assetData.includes(transactionType.action.limitOrder) || assetData.includes(transactionType.action.marketOrder)) {
+                addUniqueDexAddress(recipientId);
+            }
+            if (assetData.includes(transactionType.dividend)) {
+                addUniqueDexAddress(senderId)
             }
         }
     }
 
     let offset = clientConfig.getOffset();
     let limit = clientConfig.getLimit();
-    let totalTransactionsCount = 0;
+    let totalTransactionsCount = await getTotalTransactionsCount(clientConfig);
     try {
         do {
             clientConfig.setOffset(offset);
             const response = await axios.get(clientConfig.getTransactionsUrl());
-            totalTransactionsCount = response.data.meta.count;
             const transactions = response.data.data;
             transactions.forEach( transaction => {
                 extractAndMapDexTransactions(transaction);
             })
             for (const walletAddress of uniqueDexAddresses) {
-                yield walletAddress;
+                if (await isDexAccount(clientConfig, walletAddress)) {
+                    yield walletAddress;
+                }
             }
             totalUniqueDexAddresses = [...totalUniqueDexAddresses, ...uniqueDexAddresses];
             uniqueDexAddresses = []

@@ -18,8 +18,10 @@ export async function printDexWalletsUsingGenerator() {
 
 // (async () => {
 //     await printDexWalletsUsingIterator();
-//     await printDexWalletsUsingGenerator();
+//     // await printDexWalletsUsingGenerator();
 // })()
+
+// console.log(leaseholdClient.getMultiSignatureGroupUrl());
 
 export const getLdexMarket  = () => {
     return "lsk/eth";
