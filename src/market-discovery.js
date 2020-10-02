@@ -17,7 +17,7 @@ export async function getNodeStatus(clientConfig) {
     }
 }
 
-export async function isDexAccount(clientConfig, walletAddress) {
+async function isDexAccount(clientConfig, walletAddress) {
     try {
         const response = await axios.get(clientConfig.getMultiSignatureGroupUrl(walletAddress));
         const multiSignatureGroups = response.data.data;
@@ -33,12 +33,16 @@ export async function isDexAccount(clientConfig, walletAddress) {
         return false;
     }
 }
-
-export async function getTotalTransactionsCount(clientConfig, walletAddress) {
+function getTransactionUrl(clientConfig, walletAddress) {
     let url = clientConfig.getTransactionsUrl();
     if (walletAddress) {
         url = clientConfig.getTransactionsUrl(walletAddress)
     }
+    return url;
+}
+
+export async function getTotalTransactionsCount(clientConfig, walletAddress) {
+    let url = getTransactionUrl(clientConfig, walletAddress);
     const response = await axios.get(url);
     return response.data.meta.count;
 }
@@ -58,7 +62,7 @@ export async function* getMultiSignatureDexWallets(clientConfig) {
         if ( uniqueDexAddresses.indexOf(address) === -1  && totalUniqueDexAddresses.indexOf(address) === -1) uniqueDexAddresses.push(address);
     }
     const extractAndMapDexTransactions = (transaction) => {
-        const assetData = transaction.asset.data;
+        const assetData = transaction.asset?.data;
         const senderId = transaction.senderId;
         const recipientId = transaction.recipientId;
         if (assetData) {
@@ -84,10 +88,10 @@ export async function* getMultiSignatureDexWallets(clientConfig) {
             })
             for (const walletAddress of uniqueDexAddresses) {
                 if (await isDexAccount(clientConfig, walletAddress)) {
+                    totalUniqueDexAddresses = [...totalUniqueDexAddresses, walletAddress];
                     yield walletAddress;
                 }
             }
-            totalUniqueDexAddresses = [...totalUniqueDexAddresses, ...uniqueDexAddresses];
             uniqueDexAddresses = []
             offset += limit;
         } while (offset < totalTransactionsCount)
@@ -103,7 +107,7 @@ export async function* getMultiSignatureDexWallets(clientConfig) {
  * @param clientConfig client config to query data from specified chain
  * @param walletAddress dex wallet address for given chain
  */
-export async function getMultiSignatureDexWalletTransactions(clientConfig, walletAddress = "7485409328757727573L") {
+export async function getMarketVolume(clientConfig, walletAddress = "7485409328757727573L") {
 
     try {
         const response = await axios.get(clientConfig.getTransactionsUrl(walletAddress));
@@ -117,13 +121,33 @@ export async function getMultiSignatureDexWalletTransactions(clientConfig, walle
  * Crawls through all the transactions
  * Used to find all available markets on the chain
  * @param clientConfig
+ * @param dexWalletAddress
  */
-export async function findAvailableMarkets(clientConfig) {
+export async function findAvailableMarket(clientConfig, dexWalletAddress) {
+    let market = null;
     try {
-        const response = await axios.get(clientConfig.getTransactionsUrl());
-        console.log(response);
+        let offset = clientConfig.getOffset();
+        let limit = clientConfig.getLimit();
+        let totalTransactionsCount = await getTotalTransactionsCount(clientConfig);
+        do {
+            clientConfig.setOffset(offset);
+            const response = await axios.get(getTransactionUrl(clientConfig, dexWalletAddress));
+            const transactions = response.data.data;
+            for (const transaction of transactions) {
+                const assetData = transaction.asset?.data;
+                if (assetData?.includes(transactionType.action.limitOrder) || assetData?.includes(transactionType.action.marketOrder)) {
+                    market = assetData.split(',')[0]; // getting first substring before ,
+                    return market;
+                }
+            }
+            console.log("Offset is " + offset);
+            offset += limit;
+        } while (offset < totalTransactionsCount);
+
     } catch (error) {
         console.error(error);
     }
+    return market;
 }
+
 

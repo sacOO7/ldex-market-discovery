@@ -11,17 +11,17 @@ export async function printDexWalletsUsingIterator() {
 }
 
 export async function printDexWalletsUsingGenerator() {
-    let dexWallets = marketDiscovery.getMultiSignatureDexWallets(leaseholdClient);
-    console.log((await dexWallets.next()).value);
-    console.log((await dexWallets.next()).value);
+    let dexWallets = marketDiscovery.getMultiSignatureDexWallets(leaseholdClient)
+    const firstDexAddress = (await dexWallets.next()).value;
+    console.log(firstDexAddress + " : ");
+    const market = await marketDiscovery.findAvailableMarket(leaseholdClient, firstDexAddress);
+    console.log(market);
 }
 
-// (async () => {
-//     await printDexWalletsUsingIterator();
-//     // await printDexWalletsUsingGenerator();
-// })()
-
-// console.log(leaseholdClient.getMultiSignatureGroupUrl());
+(async () => {
+    // await printDexWalletsUsingIterator();
+    await printDexWalletsUsingGenerator();
+})()
 
 export const getLdexMarket  = () => {
     return "lsk/eth";
