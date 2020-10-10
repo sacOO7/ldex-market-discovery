@@ -1,9 +1,11 @@
 import axios from "axios";
 import {minMembers} from "./dex";
+import {QueryBuilder} from "./query-builder";
 
-export async function isDexAccount(clientConfig, walletAddress) {
+export async function isDexAccount(options, walletAddress) {
     try {
-        const response = await axios.get(clientConfig.getMultiSignatureGroupUrl(walletAddress));
+        const multisigUrl = QueryBuilder(options).buildMultiSignatureGroupUrl(walletAddress);
+        const response = await axios.get(multisigUrl);
         const multiSignatureGroups = response.data.data;
         for (const group of multiSignatureGroups) {
             if (group.address === walletAddress) {
@@ -18,8 +20,8 @@ export async function isDexAccount(clientConfig, walletAddress) {
     }
 }
 
-export async function getTotalTransactions(clientConfig, walletAddress) {
-    let url = clientConfig.getTransactionsUrl(walletAddress);
+export async function getTotalTransactions(options, walletAddress) {
+    let url = QueryBuilder(options).buildTransactionsUrl(walletAddress);
     const response = await axios.get(url);
     return response.data.meta.count;
 }
