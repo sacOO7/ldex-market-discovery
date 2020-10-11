@@ -1,5 +1,5 @@
 import axios from "axios";
-import {minMembers} from "./dex";
+import {minMembers, transactionType} from "./dex";
 import {QueryBuilder} from "./query-builder";
 
 export async function isDexAccount(options, walletAddress) {
@@ -26,4 +26,12 @@ export async function getTotalTransactions(options, walletAddress) {
     return response.data.meta.count;
 }
 
+export function isLimitOrder(assetData) {
+    const fragmentedData = assetData.split(",");
+    return fragmentedData.length === 4 && fragmentedData[1] === transactionType.action.limitOrder;
+}
 
+export function isMarketOrder(assetData) {
+    const fragmentedData = assetData.split(",");
+    return fragmentedData.length === 3 && fragmentedData[1] === transactionType.action.marketOrder;
+}

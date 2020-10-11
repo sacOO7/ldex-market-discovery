@@ -18,7 +18,7 @@ export async function getDexMarketsUsingGenerator() {
 
 (async () => {
     try {
-        await getDexMarketsUsingGenerator();
+        await getDexMarketsUsingIterator();
     } catch (e) {
         console.error(e);
     }
