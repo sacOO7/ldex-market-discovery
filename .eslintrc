@@ -7,7 +7,7 @@
     "eslint:recommended"
   ],
   "rules": {
-    "no-console": 1 // Warning
+    "no-console": 2
   },
   "env": {
     "node": true,
