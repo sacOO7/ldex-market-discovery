@@ -1,6 +1,6 @@
 import axios from 'axios'
 import {transactionType} from "./dex";
-import {getTotalTransactions, isDexAccount} from "./utils";
+import {getTotalTransactions, isDexAccount, isLimitOrder, isMarketOrder} from "./utils";
 import {QueryBuilder} from "./query-builder"
 /**
  * Used to query node health/status
@@ -49,7 +49,7 @@ export async function* getMultiSignatureDexWallets(options) {
         const senderId = transaction.senderId;
         const recipientId = transaction.recipientId;
         if (assetData) {
-            if (assetData.includes(transactionType.action.limitOrder) || assetData.includes(transactionType.action.marketOrder)) {
+            if (isLimitOrder(assetData) || isMarketOrder(assetData)) {
                 addUniqueDexAddress(recipientId);
             }
             if (assetData.includes(transactionType.dividend)) {
