@@ -1,6 +1,7 @@
 import axios from "axios";
 import {minMembers, transactionType} from "./dex";
 import {QueryBuilder} from "./query-builder";
+import log from "loglevel";
 
 export async function isDexAccount(options, walletAddress) {
     try {
@@ -16,6 +17,7 @@ export async function isDexAccount(options, walletAddress) {
         }
         return false;
     } catch (error) {
+        log.error(error);
         return false;
     }
 }

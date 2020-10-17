@@ -2,6 +2,7 @@ import axios from 'axios'
 import {transactionType} from "./dex";
 import {getTotalTransactions, isDexAccount, isLimitOrder, isMarketOrder} from "./utils";
 import {QueryBuilder} from "./query-builder"
+import log from 'loglevel'
 /**
  * Used to query node health/status
  * *
@@ -14,7 +15,7 @@ export async function getNodeStatus(options) {
         const response = await axios.get(QueryBuilder(options).buildStatusUrl());
         return response.data;
     } catch (error) {
-        console.error(error);
+        log.error(error);
     }
 }
 
@@ -78,7 +79,7 @@ export async function* getMultiSignatureDexWallets(options) {
         } while (offset < totalTransactionsCount)
 
     } catch (error) {
-        console.error(error);
+        log.error(error);
     }
     return totalUniqueDexAddresses;
 }
@@ -109,7 +110,7 @@ export async function findMarket(options, dexWalletAddress) {
         } while (offset < totalTransactionsCount);
 
     } catch (error) {
-        console.error(error);
+        log.error(error);
     }
     return market;
 }
