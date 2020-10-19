@@ -42,6 +42,7 @@ export async function* getDexMarketPair(options) {
  */
 
 export async function* getMultiSignatureDexWallets(options) {
+    console.info('Client configuration for finding Dex wallet', options);
     let uniqueDexAddresses = []
     let totalUniqueDexAddresses = []
 
@@ -101,6 +102,7 @@ export async function* getMultiSignatureDexWallets(options) {
  * @param dexWalletAddress
  */
 export async function findMarket(options, dexWalletAddress) {
+    console.info('Client configuration for finding dex market', options);
     let market = null;
     try {
         logger.info(`Searching market for ${dexWalletAddress}`);
