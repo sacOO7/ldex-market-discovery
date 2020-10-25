@@ -2,6 +2,8 @@ import axios from 'axios'
 import {transactionType} from "./dex";
 import {getTotalTransactions, isDexAccount, isLimitOrder, isMarketOrder} from "./utils";
 import {QueryBuilder} from "./query-builder"
+import {getDefaultLogger} from "./logger";
+
 /**
  * Used to query node health/status
  * *
@@ -9,12 +11,14 @@ import {QueryBuilder} from "./query-builder"
  * returns node status for given hostname/ip address
  */
 
+const logger = getDefaultLogger();
+
 export async function getNodeStatus(options) {
     try {
         const response = await axios.get(QueryBuilder(options).buildStatusUrl());
         return response.data;
     } catch (error) {
-        console.error(error);
+        logger.error(error);
     }
 }
 
@@ -38,6 +42,7 @@ export async function* getDexMarketPair(options) {
  */
 
 export async function* getMultiSignatureDexWallets(options) {
+    logger.info('Client configuration for finding Dex wallet', options);
     let uniqueDexAddresses = []
     let totalUniqueDexAddresses = []
 
@@ -59,17 +64,21 @@ export async function* getMultiSignatureDexWallets(options) {
     }
     let {offset, limit} = options;
     let totalTransactionsCount = await getTotalTransactions(options);
+    logger.info(`Total transactions found : ${totalTransactionsCount}`);
     try {
         do {
             const transactionUrl = QueryBuilder({ ...options, offset}).buildTransactionsUrl();
+            logger.info(`Querying transactions from ${offset} to ${offset + limit}`);
             const response = await axios.get(transactionUrl);
             const transactions = response.data.data;
+            logger.info(`Processing ${transactions.length} Transactions from ${offset} to ${offset + limit}`);
             transactions?.forEach( transaction => {
                 extractAndMapDexTransactions(transaction);
             })
             for (const walletAddress of uniqueDexAddresses) {
                 if (await isDexAccount(options, walletAddress)) {
                     totalUniqueDexAddresses = [...totalUniqueDexAddresses, walletAddress];
+                    logger.info(`Dex wallet found : ${walletAddress}`)
                     yield walletAddress;
                 }
             }
@@ -77,8 +86,11 @@ export async function* getMultiSignatureDexWallets(options) {
             offset += limit;
         } while (offset < totalTransactionsCount)
 
+    logger.info(`All ${totalTransactionsCount} transactions processed`);
+    logger.info(`${totalUniqueDexAddresses.length} Dex address found`);
+
     } catch (error) {
-        console.error(error);
+        logger.error(error);
     }
     return totalUniqueDexAddresses;
 }
@@ -90,18 +102,24 @@ export async function* getMultiSignatureDexWallets(options) {
  * @param dexWalletAddress
  */
 export async function findMarket(options, dexWalletAddress) {
+    logger.info('Client configuration for finding dex market', options);
     let market = null;
     try {
-        let {offset, limit} = options
+        logger.info(`Searching market for ${dexWalletAddress}`);
+        let {offset, limit} = options;
         let totalTransactionsCount = await getTotalTransactions(options, dexWalletAddress);
+        logger.info(`${totalTransactionsCount} transactions found for ${dexWalletAddress}`)
         do {
-            const walletTransactionUrl = QueryBuilder({ ...options, offset}).buildTransactionsUrl(dexWalletAddress)
+            const walletTransactionUrl = QueryBuilder({ ...options, offset}).buildTransactionsUrl(dexWalletAddress);
+            logger.info(`Querying transactions from ${offset} to ${offset + limit} for ${dexWalletAddress}`);
             const response = await axios.get(walletTransactionUrl);
             const transactions = response.data.data;
+            logger.info(`${transactions.length} Transactions fetched for processing for ${dexWalletAddress}`);
             for (const transaction of transactions) {
                 const assetData = transaction.asset?.data;
                 if (assetData?.includes(transactionType.action.limitOrder) || assetData?.includes(transactionType.action.marketOrder)) {
                     market = assetData.split(',')[0]; // getting first substring before ,
+                    logger.info(`Dex market found : ${market}`);
                     return market;
                 }
             }
@@ -109,7 +127,7 @@ export async function findMarket(options, dexWalletAddress) {
         } while (offset < totalTransactionsCount);
 
     } catch (error) {
-        console.error(error);
+        logger.error(error);
     }
     return market;
 }

@@ -1,6 +1,9 @@
 import axios from "axios";
 import {minMembers, transactionType} from "./dex";
 import {QueryBuilder} from "./query-builder";
+import {getDefaultLogger} from "./logger";
+
+const logger = getDefaultLogger();
 
 export async function isDexAccount(options, walletAddress) {
     try {
@@ -14,10 +17,10 @@ export async function isDexAccount(options, walletAddress) {
                 }
             }
         }
-        return false;
     } catch (error) {
-        return false;
+        logger.error(error);
     }
+    return false;
 }
 
 export async function getTotalTransactions(options, walletAddress) {
