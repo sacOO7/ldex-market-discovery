@@ -3,6 +3,8 @@ import {transactionType} from "./dex";
 import {getTotalTransactions, isDexAccount, isLimitOrder, isMarketOrder} from "./utils";
 import {QueryBuilder} from "./query-builder"
 import {getDefaultLogger} from "./logger";
+import {ClientOptionsBuilder} from "./client-options";
+import Parallel from "paralleljs";
 
 /**
  * Used to query node health/status
@@ -22,6 +24,69 @@ export async function getNodeStatus(options) {
     }
 }
 
+export async function getDexMarkets(options) {
+    let dexWallets = await getMultiSignatureDexWallets(options);
+    let dexMarkets = [];
+    for await (let dexWallet of dexWallets) {
+        dexMarkets.push(dexWallet);
+    }
+    return dexMarkets;
+}
+
+export async function getDexMarketPairsUsingWorkers(options) {
+    let totalTransactionsCount = await getTotalTransactions(options);
+    if (options.transactionLimit < totalTransactionsCount) {
+        totalTransactionsCount = options.transactionLimit;
+    }
+
+    const runWorkers = (fromTransactions, transactionLimit) => {
+        const workerOptions = buildParallelOptions(fromTransactions, transactionLimit);
+        let p = new Parallel(workerOptions);
+        p.map(async (option) => {
+            return await getDexMarkets(option);
+        }).reduce(markets => {
+          logger.info(`Markets found ${markets}`);
+        })
+    }
+
+    const createOption = (fromTransactions, transactionLimit) => {
+        return ClientOptionsBuilder().from(options).setOffset(fromTransactions).setTransactionLimit(transactionLimit).build();
+    }
+
+    const buildParallelOptions = (fromTransactions, transactionLimit) => {
+        let workerOptions = [];
+        const transactionSize = transactionLimit - fromTransactions;
+        if (transactionSize <= options.queueSize) {
+            workerOptions.push(createOption(options, fromTransactions, transactionLimit));
+            return workerOptions;
+        } else {
+            let transactionOffset = fromTransactions;
+            let transactionLimit = transactionSize / options.queueSize;
+            do {
+                const remainingTransactions = transactionSize % options.queueSize;
+                if (remainingTransactions < transactionLimit) {
+                    workerOptions.push(createOption(options, transactionOffset, remainingTransactions));
+                    break;
+                } else {
+                    workerOptions.push(createOption(options, transactionOffset, transactionLimit));
+                }
+                transactionOffset += transactionLimit;
+            } while (transactionOffset < transactionSize);
+        }
+    }
+
+    let start = 0;
+    let limit = options.parallelTProcessingLimit;
+    do {
+        if (totalTransactionsCount < limit) {
+            runWorkers(start, totalTransactionsCount);
+            break;
+        } else {
+            runWorkers(start, limit);
+        }
+        start += options.parallelTProcessingLimit;
+    } while (start < totalTransactionsCount - 1)
+}
 
 export async function* getDexMarketPair(options) {
     let dexWallets = await getMultiSignatureDexWallets(options);
@@ -62,9 +127,13 @@ export async function* getMultiSignatureDexWallets(options) {
             }
         }
     }
-    let {offset, limit} = options;
+    let {offset, limit, transactionLimit} = options;
     let totalTransactionsCount = await getTotalTransactions(options);
-    logger.info(`Total transactions found : ${totalTransactionsCount}`);
+    if (transactionLimit && transactionLimit < totalTransactionsCount) {
+        logger.info(`Total transactions found : ${totalTransactionsCount}`);
+        logger.info(`transactionLimit ${transactionLimit} is less than totalTransactions, setting iteration till ${transactionLimit}`)
+        totalTransactionsCount = transactionLimit;
+    }
     try {
         do {
             const transactionUrl = QueryBuilder({ ...options, offset}).buildTransactionsUrl();

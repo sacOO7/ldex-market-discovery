@@ -1,16 +1,24 @@
-export const ClientOptionsBuilder = ((hostName, port, isHttps = false, basePath = "api", offset = 0, limit = 100) => {
+export const ClientOptionsBuilder = ((hostName, port, isHttps = false, basePath = "api", transactionLimit) => {
     let options = {
         hostName,
         port,
         isHttps,
         basePath,
-        offset,
-        limit
+        transactionLimit,
+        parallelTProcessingLimit: 100000,
+        offset : 0,
+        limit : 100,
+        queueSize : 20,
+        workers : 4
     };
 
     return {
         build() {
           return options;
+        },
+        from(oldOptions) {
+          options = { ... oldOptions}
+          return this;
         },
         setHost(hostName) {
             options.hostName = hostName;
@@ -28,12 +36,12 @@ export const ClientOptionsBuilder = ((hostName, port, isHttps = false, basePath 
             options.basePath = path;
             return this;
         },
-        setOffset(offsetValue) {
-            options.offset = offsetValue;
+        setTransactionLimit(limit) {
+            options.transactionLimit = limit;
             return this;
         },
-        setLimit(limitValue) {
-            options.limit = limitValue;
+        setOffset(offsetValue) {
+            options.offset = offsetValue;
             return this;
         }
     }
