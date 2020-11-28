@@ -12,9 +12,14 @@ export const QueryBuilder = ((options) => {
             });
         },
         buildTransactionsUrl (walletAddress) {
+            const { offset, limit, transactionLimit } = options;
+            const getActualUpperLimit = () => {
+                const diff = transactionLimit - offset;
+                return diff < limit ? diff : limit;
+            }
             let query = {
-                offset: options.offset,
-                limit: options.limit,
+                offset: offset,
+                limit: getActualUpperLimit(),
             }
             if (walletAddress) {
                 query.senderIdOrRecipientId = walletAddress;

@@ -4,12 +4,12 @@ export const ClientOptionsBuilder = ((hostName, port, isHttps = false, basePath 
         port,
         isHttps,
         basePath,
-        transactionLimit,
-        parallelTProcessingLimit: 100000,
+        transactionLimit: 1000000,  // If lots of transactions are available, then limit on number of transactions to be processed.
         offset : 0,
-        limit : 100,
-        queueSize : 20,
-        workers : 4
+        limit: 100,  // per page request transactions, used in querybuilder along with offset
+        parallelTProcessingLimit: 100000,
+        workers : 4, // by default number of workers are equal to number of CPU cores, should change to something stable, 4x size of CPU cores
+        queueSize : 20 // Divides parallelTransactions by this number, enqueues all of them into the queue
     };
 
     return {

@@ -2,6 +2,7 @@ import axios from "axios";
 import {minMembers, transactionType} from "./dex";
 import {QueryBuilder} from "./query-builder";
 import {getDefaultLogger} from "./logger";
+import {ClientOptionsBuilder} from "./client-options";
 
 const logger = getDefaultLogger();
 
@@ -37,4 +38,8 @@ export function isLimitOrder(assetData) {
 export function isMarketOrder(assetData) {
     const fragmentedData = assetData.split(",");
     return fragmentedData.length === 3 && fragmentedData[1] === transactionType.action.marketOrder;
+}
+
+export const createOption = (options, fromTransactions, transactionLimit) => {
+    return ClientOptionsBuilder().from(options).setOffset(fromTransactions).setTransactionLimit(transactionLimit).build();
 }
