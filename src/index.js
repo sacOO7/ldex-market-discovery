@@ -30,15 +30,14 @@ export async function* getMultiSignatureDexWalletsUsingWorkers(options) {
     }
 
     const getDexWalletsUsingWorkers = async (fromTransactions, transactionLimit) => {
-        const workerPool = Pool(() => spawn(new Worker("../lib/worker.js")), 4);
+        const workerPool = Pool(() => spawn(new Worker("../lib/worker.js")));
         console.log(`Parallel processing from ${fromTransactions} to ${transactionLimit}`)
         const parallelOptions = buildParallelOptions(fromTransactions, transactionLimit);
         const mixedDexWallets = await Promise.all(parallelOptions.map(option =>
             workerPool.queue(async getDexMarkets => {
                 return await getDexMarkets(option);
             })));
-        await workerPool.completed();
-        await workerPool.terminate();
+        await workerPool.terminate(true);
         return mixedDexWallets;
     }
 
@@ -73,7 +72,7 @@ export async function* getMultiSignatureDexWalletsUsingWorkers(options) {
             end = totalTransactionsCount;
         }
         const dexWallets = await getDexWalletsUsingWorkers(start, end);
-        detectedDexWallets.push(dexWallets);
+        detectedDexWallets = [...detectedDexWallets, ...dexWallets];
         start += parallelTProcessingLimit;
         end += parallelTProcessingLimit;
     } while (start < totalTransactionsCount);
