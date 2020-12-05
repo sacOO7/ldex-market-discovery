@@ -8,7 +8,8 @@
     "lint": "eslint src --ext .js",
     "lint:fix": "eslint src --fix --ext .js",
     "test": "jest",
-    "build": "babel src -d lib"
+    "build": "babel src -d lib",
+    "prepack": "yarn lint && yarn test && yarn build"
   },
   "repository": {
     "type": "git",

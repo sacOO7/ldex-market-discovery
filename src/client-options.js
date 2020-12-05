@@ -9,7 +9,8 @@ export const ClientOptionsBuilder = ((hostName, port, isHttps = false, basePath 
         limit: 100,  // per page request transactions, used in querybuilder along with offset
         parallelTProcessingLimit: 100000,
         workers : 4, // by default number of workers are equal to number of CPU cores, should change to something stable, 4x size of CPU cores
-        queueSize // Divides parallelTransactions by this number, enqueues all of them into the queue
+        queueSize, // Divides parallelTransactions by this number, enqueues all of them into the queue
+        queryRecentFirst: false
     };
 
     return {
@@ -42,6 +43,10 @@ export const ClientOptionsBuilder = ((hostName, port, isHttps = false, basePath 
         },
         setOffset(offsetValue) {
             options.offset = offsetValue;
+            return this;
+        },
+        setQueryRecentFirst(value) {
+            options.queryRecentFirst = value;
             return this;
         }
     }
