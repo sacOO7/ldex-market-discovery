@@ -25,8 +25,9 @@ export async function getNodeStatus(options) {
 
 export async function* getMultiSignatureDexWalletsUsingWorkers(options) {
     let totalTransactionsCount = await getTotalTransactions(options);
+    let iterateTillTransactions = totalTransactionsCount;
     if (options.transactionLimit < totalTransactionsCount) {
-        totalTransactionsCount = options.transactionLimit;
+        iterateTillTransactions = options.transactionLimit;
     }
 
     const getDexWalletsUsingWorkers = async (fromTransactions, transactionLimit) => {
@@ -68,14 +69,14 @@ export async function* getMultiSignatureDexWalletsUsingWorkers(options) {
     let end = start + parallelTProcessingLimit;
     let detectedDexWallets = [];
     do {
-        if (end > totalTransactionsCount) {
-            end = totalTransactionsCount;
+        if (end > iterateTillTransactions) {
+            end = iterateTillTransactions;
         }
         const dexWallets = await getDexWalletsUsingWorkers(start, end);
         detectedDexWallets = [...detectedDexWallets, ...dexWallets];
         start += parallelTProcessingLimit;
         end += parallelTProcessingLimit;
-    } while (start < totalTransactionsCount);
+    } while (start < iterateTillTransactions);
     const uniqueDexWallets = detectedDexWallets.flat()
         .filter((item, i, ar) => ar.indexOf(item) === i);
     for (const dexWallet of uniqueDexWallets) {
@@ -125,10 +126,11 @@ export async function* getMultiSignatureDexWallets(options) {
     }
     let {offset, limit, transactionLimit} = options;
     let totalTransactionsCount = await getTotalTransactions(options);
+    let iterateTillTransactions = totalTransactionsCount;
     if (transactionLimit && transactionLimit < totalTransactionsCount) {
         logger.info(`Total transactions found : ${totalTransactionsCount}`);
         logger.info(`transactionLimit ${transactionLimit} is less than totalTransactions, setting iteration till ${transactionLimit}`)
-        totalTransactionsCount = transactionLimit;
+        iterateTillTransactions = transactionLimit;
     }
     try {
         do {
@@ -149,9 +151,9 @@ export async function* getMultiSignatureDexWallets(options) {
             }
             uniqueDexAddresses = []
             offset += limit;
-        } while (offset < totalTransactionsCount)
+        } while (offset < iterateTillTransactions)
 
-        logger.info(`All ${totalTransactionsCount} transactions processed`);
+        logger.info(`All ${iterateTillTransactions} transactions processed`);
         logger.info(`${totalUniqueDexAddresses.length} Dex address found`);
 
     } catch (error) {
