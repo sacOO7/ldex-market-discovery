@@ -1,8 +1,9 @@
 import axios from 'axios'
 import {transactionType} from "./dex";
-import {getTotalTransactions, isDexAccount, isLimitOrder, isMarketOrder} from "./utils";
+import {createOption, getTotalTransactions, isDexAccount, isLimitOrder, isMarketOrder} from "./utils";
 import {QueryBuilder} from "./query-builder"
 import {getDefaultLogger} from "./logger";
+import {Pool, spawn, Worker} from "threads";
 
 /**
  * Used to query node health/status
@@ -22,14 +23,75 @@ export async function getNodeStatus(options) {
     }
 }
 
+export async function* getMultiSignatureDexWalletsUsingWorkers(options) {
+    let totalTransactionsCount = await getTotalTransactions(options);
+    let iterateTillTransactions = totalTransactionsCount;
+    if (options.transactionLimit < totalTransactionsCount) {
+        iterateTillTransactions = options.transactionLimit;
+    }
 
-export async function* getDexMarketPair(options) {
-    let dexWallets = await getMultiSignatureDexWallets(options);
+    const getDexWalletsUsingWorkers = async (fromTransactions, transactionLimit) => {
+        const workerPool = Pool(() => spawn(new Worker("../lib/worker.js")));
+        logger.info(`Parallel processing from ${fromTransactions} to ${transactionLimit}`)
+        const parallelOptions = buildParallelOptions(fromTransactions, transactionLimit);
+        const mixedDexWallets = await Promise.all(parallelOptions.map(option =>
+            workerPool.queue(async getDexMarkets => {
+                return await getDexMarkets(option);
+            })));
+        await workerPool.terminate(true);
+        return mixedDexWallets;
+    }
+
+    const buildParallelOptions = (fromTransactions, transactionLimit) => {
+        let workerOptions = [];
+        const transactionSize = transactionLimit - fromTransactions;
+        if (transactionSize <= options.queueSize) {
+            workerOptions.push(createOption(options, fromTransactions, transactionLimit));
+        } else {
+            let slicedTStart = fromTransactions;
+            let sliceSize = Math.round(transactionSize / options.queueSize);
+            let slicedTEnd = slicedTStart + sliceSize;
+            do {
+                if (slicedTEnd > transactionLimit) {
+                    slicedTEnd = transactionLimit;
+                }
+                workerOptions.push(createOption(options, slicedTStart, slicedTEnd));
+                slicedTStart += sliceSize;
+                slicedTEnd += sliceSize;
+            } while (slicedTStart < transactionLimit);
+        }
+        return workerOptions;
+    }
+
+    // Just run for first time, need to change to run iteratively within given limit and fetch entries from latest transactions, reuse buildParallelOptionsCode
+    let start = 0;
+    const { parallelTProcessingLimit } = options;
+    let end = start + parallelTProcessingLimit;
+    let detectedDexWallets = [];
+    do {
+        if (end > iterateTillTransactions) {
+            end = iterateTillTransactions;
+        }
+        const dexWallets = await getDexWalletsUsingWorkers(start, end);
+        detectedDexWallets = [...detectedDexWallets, ...dexWallets];
+        start += parallelTProcessingLimit;
+        end += parallelTProcessingLimit;
+    } while (start < iterateTillTransactions);
+    const uniqueDexWallets = detectedDexWallets.flat()
+        .filter((item, i, ar) => ar.indexOf(item) === i);
+    for (const dexWallet of uniqueDexWallets) {
+        yield dexWallet;
+    }
+    return uniqueDexWallets;
+}
+
+export async function* getDexMarketPair(options, parallel = false) {
+    let dexWallets = parallel ? await getMultiSignatureDexWalletsUsingWorkers(options) : await getMultiSignatureDexWallets(options);
     let dexMarketPairs = [];
     for await (let dexWallet of dexWallets) {
         const market = await findMarket(options, dexWallet);
-        yield { market, dexWallet };
-        dexMarketPairs.push({ market, dexWallet });
+        yield {market, dexWallet};
+        dexMarketPairs.push({market, dexWallet});
     }
     return dexMarketPairs;
 }
@@ -47,7 +109,7 @@ export async function* getMultiSignatureDexWallets(options) {
     let totalUniqueDexAddresses = []
 
     const addUniqueDexAddress = (address) => {
-        if ( uniqueDexAddresses.indexOf(address) === -1  && totalUniqueDexAddresses.indexOf(address) === -1) uniqueDexAddresses.push(address);
+        if (uniqueDexAddresses.indexOf(address) === -1 && totalUniqueDexAddresses.indexOf(address) === -1) uniqueDexAddresses.push(address);
     }
     const extractAndMapDexTransactions = (transaction) => {
         const assetData = transaction.asset?.data;
@@ -62,17 +124,22 @@ export async function* getMultiSignatureDexWallets(options) {
             }
         }
     }
-    let {offset, limit} = options;
+    let {offset, limit, transactionLimit} = options;
     let totalTransactionsCount = await getTotalTransactions(options);
-    logger.info(`Total transactions found : ${totalTransactionsCount}`);
+    let iterateTillTransactions = totalTransactionsCount;
+    if (transactionLimit && transactionLimit < totalTransactionsCount) {
+        logger.info(`Total transactions found : ${totalTransactionsCount}`);
+        logger.info(`transactionLimit ${transactionLimit} is less than totalTransactions, setting iteration till ${transactionLimit}`)
+        iterateTillTransactions = transactionLimit;
+    }
     try {
         do {
-            const transactionUrl = QueryBuilder({ ...options, offset}).buildTransactionsUrl();
-            logger.info(`Querying transactions from ${offset} to ${offset + limit}`);
+            const transactionUrl = QueryBuilder({...options, offset}).buildTransactionsUrl();
+            logger.info(`Querying transactions using ${transactionUrl}`);
             const response = await axios.get(transactionUrl);
             const transactions = response.data.data;
-            logger.info(`Processing ${transactions.length} Transactions from ${offset} to ${offset + limit}`);
-            transactions?.forEach( transaction => {
+            logger.info(`Processing ${transactions.length} transactions`);
+            transactions?.forEach(transaction => {
                 extractAndMapDexTransactions(transaction);
             })
             for (const walletAddress of uniqueDexAddresses) {
@@ -84,10 +151,10 @@ export async function* getMultiSignatureDexWallets(options) {
             }
             uniqueDexAddresses = []
             offset += limit;
-        } while (offset < totalTransactionsCount)
+        } while (offset < iterateTillTransactions)
 
-    logger.info(`All ${totalTransactionsCount} transactions processed`);
-    logger.info(`${totalUniqueDexAddresses.length} Dex address found`);
+        logger.info(`All ${iterateTillTransactions} transactions processed`);
+        logger.info(`${totalUniqueDexAddresses.length} Dex address found`);
 
     } catch (error) {
         logger.error(error);
@@ -110,7 +177,7 @@ export async function findMarket(options, dexWalletAddress) {
         let totalTransactionsCount = await getTotalTransactions(options, dexWalletAddress);
         logger.info(`${totalTransactionsCount} transactions found for ${dexWalletAddress}`)
         do {
-            const walletTransactionUrl = QueryBuilder({ ...options, offset}).buildTransactionsUrl(dexWalletAddress);
+            const walletTransactionUrl = QueryBuilder({...options, offset}).buildTransactionsUrl(dexWalletAddress);
             logger.info(`Querying transactions from ${offset} to ${offset + limit} for ${dexWalletAddress}`);
             const response = await axios.get(walletTransactionUrl);
             const transactions = response.data.data;

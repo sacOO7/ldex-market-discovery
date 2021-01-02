@@ -22,12 +22,8 @@ jobs:
           name: Test
           command: |
             set +e
-            yarn test
-      - run:
-          name: Build
-          command: |
-            set +e
             yarn build
+            yarn test
 
 workflows:
   test-and-deploy:
