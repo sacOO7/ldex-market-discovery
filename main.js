@@ -1,25 +1,28 @@
 import {ClientOptionsBuilder} from "./src/client-options";
 import * as marketDiscovery from "./src";
+import {getDefaultLogger} from "./src/logger";
 const leaseholdOptions = ClientOptionsBuilder("54.82.244.206",8010).build();
+
+const logger = getDefaultLogger();
 
 export async function getDexMarketsUsingIterator(parallel = false) {
     let dexMarketPair = await marketDiscovery.getDexMarketPair(leaseholdOptions, parallel);
     for await (let dexMarket of dexMarketPair) {
-        console.log(dexMarket);
+        logger.log(dexMarket);
     }
 }
 
 export async function getDexMarketsUsingGenerator(parallel = false) {
     let marketPairs = await marketDiscovery.getDexMarketPair(leaseholdOptions, parallel);
     const pair = (await marketPairs.next()).value;
-    console.log(pair);
+    logger.log(pair);
 }
 
 (async () => {
     try {
         await getDexMarketsUsingIterator(true);
     } catch (e) {
-        console.error(e);
+        logger.error(e);
     }
 })()
 
