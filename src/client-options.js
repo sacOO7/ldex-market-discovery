@@ -10,7 +10,7 @@ export const ClientOptionsBuilder = ((hostName, port, isHttps = false, basePath 
         parallelTProcessingLimit: 100000,
         workers : 4, // by default number of workers are equal to number of CPU cores, should change to something stable, 4x size of CPU cores
         queueSize, // Divides parallelTransactions by this number, enqueues all of them into the queue
-        queryRecentFirst: false
+        recentFirst: false // Used to query latest records first
     };
 
     return {
@@ -45,8 +45,8 @@ export const ClientOptionsBuilder = ((hostName, port, isHttps = false, basePath 
             options.offset = offsetValue;
             return this;
         },
-        setQueryRecentFirst(value) {
-            options.queryRecentFirst = value;
+        setRecentFirst(value) {
+            options.recentFirst = value;
             return this;
         }
     }

@@ -1,4 +1,4 @@
-import { spawn, Pool, Worker, BlobWorker } from "threads"
+import { spawn, Pool, Worker } from "threads"
 
 describe("Parallel Processing",() => {
     jest.setTimeout(60000);

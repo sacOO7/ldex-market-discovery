@@ -12,7 +12,7 @@ export const QueryBuilder = ((options) => {
             });
         },
         buildTransactionsUrl (walletAddress) {
-            const { offset, limit, transactionLimit } = options;
+            const { offset, limit, transactionLimit, recentFirst } = options;
             const getActualUpperLimit = () => {
                 const diff = transactionLimit - offset;
                 return diff < limit ? diff : limit;
@@ -23,6 +23,9 @@ export const QueryBuilder = ((options) => {
             }
             if (walletAddress) {
                 query.senderIdOrRecipientId = walletAddress;
+            }
+            if (recentFirst) {
+                query = { ...query, sort : "timestamp:desc" }
             }
             return url.format({
                 protocol: options.isHttps ? "https" : "http",
