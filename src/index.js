@@ -199,6 +199,35 @@ export async function findMarket(options, dexWalletAddress) {
     return market;
 }
 
+export async function getVolume(options, dexWalletAddress, sinceDays) {
+    let totalVolume = 0;
+    let inboundVolume = 0;
+    let outboundVolume = 0;
+
+    logger.info('Client configuration for finding dex market', options);
+    try {
+        logger.info(`Searching market for ${dexWalletAddress}`);
+        let {offset, limit} = options;
+        let totalTransactionsCount = await getTotalTransactions(options, dexWalletAddress, sinceDays);
+        logger.info(`${totalTransactionsCount} transactions found for ${dexWalletAddress}`)
+        do {
+            const walletTransactionUrl = QueryBuilder({...options, offset}).buildTransactionsUrl(dexWalletAddress, sinceDays);
+            logger.info(`Querying transactions from ${offset} to ${offset + limit} for ${dexWalletAddress}`);
+            const response = await axios.get(walletTransactionUrl);
+            const transactions = response.data.data;
+            logger.info(`${transactions.length} Transactions fetched for processing for ${dexWalletAddress}`);
+            for (const transaction of transactions) {
+                const assetData = transaction.asset?.data;
+            }
+            offset += limit;
+        } while (offset < totalTransactionsCount);
+
+    } catch (error) {
+        logger.error(error);
+    }
+    return {inboundVolume, outboundVolume, totalVolume};
+}
+
 /**
  * Used to query all multiSigTransactions in order to find trading volume, ranking dex markets & other stats for the market
  * @param options

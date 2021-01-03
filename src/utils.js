@@ -24,8 +24,8 @@ export async function isDexAccount(options, walletAddress) {
     return false;
 }
 
-export async function getTotalTransactions(options, walletAddress) {
-    let url = QueryBuilder(options).buildTransactionsUrl(walletAddress);
+export async function getTotalTransactions(options, walletAddress, sinceDays) {
+    let url = QueryBuilder(options).buildTransactionsUrl(walletAddress, sinceDays);
     const response = await axios.get(url);
     return response.data.meta.count;
 }
@@ -43,3 +43,13 @@ export function isMarketOrder(assetData) {
 export const createOption = (options, fromTransactions, transactionLimit) => {
     return ClientOptionsBuilder().from(options).setOffset(fromTransactions).setTransactionLimit(transactionLimit).build();
 }
+
+export const getUnixTimeStampSince = (days) => {
+    const toDate = new Date();
+    const toDateTime = Math.round(toDate.getTime()/1000);
+    const fromDate = new Date(toDate.getTime() - (days * 24 * 60 * 60 * 1000));
+    const fromDateTime = Math.round(fromDate.getTime()/1000);
+    return {fromDateTime, toDateTime};
+}
+
+
