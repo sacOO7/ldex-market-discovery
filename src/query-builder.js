@@ -12,6 +12,14 @@ export const QueryBuilder = ((options) => {
                 port : options.port
             });
         },
+        buildNodeConstantsUrl () {
+            return url.format({
+                protocol: options.isHttps ? "https" : "http",
+                hostname: options.hostName,
+                pathname: `/${options.basePath}/node/constants`,
+                port : options.port
+            });
+        },
         buildTransactionsUrl (walletAddress, sinceDays) {
             const { offset, limit, transactionLimit, recentFirst } = options;
             const getActualUpperLimit = () => {

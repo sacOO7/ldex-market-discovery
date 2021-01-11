@@ -23,6 +23,15 @@ export async function getNodeStatus(options) {
     }
 }
 
+export async function getNodeConstants(options) {
+    try {
+        const response = await axios.get(QueryBuilder(options).buildNodeConstantsUrl());
+        return response.data;
+    } catch (error) {
+        logger.error(error);
+    }
+}
+
 export async function* getMultiSignatureDexWalletsUsingWorkers(options) {
     let totalTransactionsCount = await getTotalTransactions(options);
     let iterateTillTransactions = totalTransactionsCount;
@@ -200,7 +209,6 @@ export async function findMarket(options, dexWalletAddress) {
 }
 
 export async function getVolume(options, dexWalletAddress, sinceDays) {
-    let totalVolume = 0;
     let inboundVolume = 0;
     let outboundVolume = 0;
 
@@ -217,7 +225,15 @@ export async function getVolume(options, dexWalletAddress, sinceDays) {
             const transactions = response.data.data;
             logger.info(`${transactions.length} Transactions fetched for processing for ${dexWalletAddress}`);
             for (const transaction of transactions) {
-                const assetData = transaction.asset?.data;
+                const senderId = transaction.senderId;
+                const recipientId = transaction.recipientId;
+                const amount = parseInt(transaction.amount)
+                if (senderId === dexWalletAddress) {
+                    outboundVolume += amount;
+                }
+                if(recipientId === dexWalletAddress) {
+                    inboundVolume += amount;
+                }
             }
             offset += limit;
         } while (offset < totalTransactionsCount);
@@ -225,7 +241,7 @@ export async function getVolume(options, dexWalletAddress, sinceDays) {
     } catch (error) {
         logger.error(error);
     }
-    return {inboundVolume, outboundVolume, totalVolume};
+    return {inboundVolume, outboundVolume, totalVolume : inboundVolume + outboundVolume};
 }
 
 /**
