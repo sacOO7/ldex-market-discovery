@@ -22,4 +22,13 @@ export const transactionType = {
     dividend : "Member dividend"
 }
 
+export const volumeType = {
+    days : {
+        daily: 1,
+        weekly: 7,
+        monthly: 30,
+        yearly: 365
+    }
+}
+
 export const minMembers = 5;

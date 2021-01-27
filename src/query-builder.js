@@ -1,4 +1,5 @@
 import url from "url";
+import {getUnixTimeStampSince} from "./utils";
 
 export const QueryBuilder = ((options) => {
 
@@ -11,7 +12,15 @@ export const QueryBuilder = ((options) => {
                 port : options.port
             });
         },
-        buildTransactionsUrl (walletAddress) {
+        buildNodeConstantsUrl () {
+            return url.format({
+                protocol: options.isHttps ? "https" : "http",
+                hostname: options.hostName,
+                pathname: `/${options.basePath}/node/constants`,
+                port : options.port
+            });
+        },
+        buildTransactionsUrl (walletAddress, sinceDays) {
             const { offset, limit, transactionLimit, recentFirst } = options;
             const getActualUpperLimit = () => {
                 const diff = transactionLimit - offset;
@@ -26,6 +35,10 @@ export const QueryBuilder = ((options) => {
             }
             if (recentFirst) {
                 query = { ...query, sort : "timestamp:desc" }
+            }
+            if (sinceDays) {
+                const {fromDateTime, toDateTime} = getUnixTimeStampSince(sinceDays);
+                query = { ...query, fromTimestamp : fromDateTime, toTimestamp : toDateTime }
             }
             return url.format({
                 protocol: options.isHttps ? "https" : "http",

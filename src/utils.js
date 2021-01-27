@@ -6,6 +6,8 @@ import {ClientOptionsBuilder} from "./client-options";
 
 const logger = getDefaultLogger();
 
+const liskEpochTime = new Date(Date.UTC(2016, 4, 24, 17, 0, 0, 0)).getTime()/1000;
+
 export async function isDexAccount(options, walletAddress) {
     try {
         const multisigUrl = QueryBuilder(options).buildMultiSignatureGroupUrl(walletAddress);
@@ -24,8 +26,8 @@ export async function isDexAccount(options, walletAddress) {
     return false;
 }
 
-export async function getTotalTransactions(options, walletAddress) {
-    let url = QueryBuilder(options).buildTransactionsUrl(walletAddress);
+export async function getTotalTransactions(options, walletAddress, sinceDays) {
+    let url = QueryBuilder(options).buildTransactionsUrl(walletAddress, sinceDays);
     const response = await axios.get(url);
     return response.data.meta.count;
 }
@@ -42,4 +44,16 @@ export function isMarketOrder(assetData) {
 
 export const createOption = (options, fromTransactions, transactionLimit) => {
     return ClientOptionsBuilder().from(options).setOffset(fromTransactions).setTransactionLimit(transactionLimit).build();
+}
+
+export const getUnixTimeStampSince = (days) => {
+    const toDate = new Date();
+    const toDateTime = Math.round(toDate.getTime()/1000) - liskEpochTime;
+    const fromDate = new Date(toDate.getTime() - (days * 24 * 60 * 60 * 1000));
+    const fromDateTime = Math.round(fromDate.getTime()/1000) - liskEpochTime;
+    return {fromDateTime, toDateTime};
+}
+
+export const convertToLSH = (amount) => {
+    return Math.round(amount / 1000000) / 100
 }
